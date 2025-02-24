@@ -10,23 +10,25 @@ import os
 # Load environment variables
 load_dotenv()
 
+
 def get_llm():
     """Initialize LLM based on environment configuration"""
     model_type = os.getenv("MODEL_TYPE", "openai").lower()
-    
+
     if model_type == "openai":
         return ChatOpenAI(
             model=os.getenv("OPENAI_MODEL", "gpt-4o"),
             temperature=float(os.getenv("MODEL_TEMPERATURE", "0")),
-            api_key=os.getenv("OPENAI_API_KEY")
+            api_key=os.getenv("OPENAI_API_KEY"),
         )
     elif model_type == "ollama":
         return ChatOllama(
             model=os.getenv("OLLAMA_MODEL", "llama2"),
-            temperature=float(os.getenv("MODEL_TEMPERATURE", "0"))
+            temperature=float(os.getenv("MODEL_TEMPERATURE", "0")),
         )
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
+
 
 class Neo4jConnection:
     def __init__(self):
@@ -34,14 +36,15 @@ class Neo4jConnection:
         self.user = os.getenv("NEO4J_USER")
         self.password = os.getenv("NEO4J_PASSWORD")
         self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
-        
+
     def close(self):
         self.driver.close()
-        
+
     def query(self, query, parameters=None):
         with self.driver.session() as session:
             result = session.run(query, parameters or {})
             return [record for record in result]
+
 
 # Load the text file
 loader = TextLoader("data/dummytext.txt")
@@ -66,40 +69,31 @@ try:
     # Create nodes from graph_docs
     for doc in graph_docs:
         for node in doc.nodes:
-            node_data = {
-                "id": node.id,
-                "properties": node.properties
-            }
-            
+            node_data = {"id": node.id, "properties": node.properties}
+
             create_node_query = """
             MERGE (n:{label} {{id: $id}})
             SET n += $properties
             """.format(label=node.type)
-            
-            connection.query(
-                create_node_query,
-                node_data
-            )
-        
+
+            connection.query(create_node_query, node_data)
+
         # Create relationships
         for rel in doc.relationships:
             rel_data = {
                 "source_id": rel.source.id,
                 "target_id": rel.target.id,
-                "properties": rel.properties
+                "properties": rel.properties,
             }
-            
+
             create_rel_query = """
             MATCH (source) WHERE source.id = $source_id
             MATCH (target) WHERE target.id = $target_id
             MERGE (source)-[r:{rel_type}]->(target)
             SET r += $properties
             """.format(rel_type=rel.type)
-            
-            connection.query(
-                create_rel_query,
-                rel_data
-            )
+
+            connection.query(create_rel_query, rel_data)
 
     # Verify graph creation
     print("\nCreated Nodes:")

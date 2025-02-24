@@ -1,4 +1,5 @@
 .env 
 .cursorrules
 .venv
+.ruff_cache
 test.py
