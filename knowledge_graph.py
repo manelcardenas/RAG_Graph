@@ -1,18 +1,19 @@
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import ChatOllama
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-from neo4j import GraphDatabase
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from langchain_community.document_loaders import TextLoader
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from neo4j import GraphDatabase
 
 # Load environment variables
 load_dotenv()
 
 
 def get_llm():
-    """Initialize LLM based on environment configuration"""
+    """Initialize LLM based on environment configuration."""
     model_type = os.getenv("MODEL_TYPE", "openai").lower()
 
     if model_type == "openai":
@@ -31,19 +32,25 @@ def get_llm():
 
 
 class Neo4jConnection:
+    """Neo4j connection class."""
+
     def __init__(self):
+        """Initialize Neo4j connection."""
         self.uri = os.getenv("NEO4J_URI")
         self.user = os.getenv("NEO4J_USER")
         self.password = os.getenv("NEO4J_PASSWORD")
         self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
 
     def close(self):
+        """Close Neo4j connection."""
         self.driver.close()
 
     def query(self, query, parameters=None):
+        """Query Neo4j database."""
         with self.driver.session() as session:
             result = session.run(query, parameters or {})
-            return [record for record in result]
+            # return [record for record in result]
+            return list(result)
 
 
 # Load the text file
