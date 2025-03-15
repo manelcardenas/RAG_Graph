@@ -59,6 +59,10 @@ Run the setup script to create a virtual environment and install all dependencie
    ```bash
    pip install -e ".[dev]"
    ```
+   or
+   ```bash
+   pip install . ".[dev]"
+   ```
 
 ### Using `uv` (Faster Alternative)
 

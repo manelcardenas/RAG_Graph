@@ -1,2 +1,0 @@
-[console_scripts]
-rag-graph = rag_graph.cli:main
